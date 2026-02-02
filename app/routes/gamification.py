@@ -4,6 +4,7 @@ from app import db
 from app.models.user import User
 from app.models.gamification import Badge, UserBadge, Challenge, Leaderboard, Achievement
 from app.services.streak_service import update_user_streak, award_streak_bonus, get_streak_status
+from app.services.leaderboard_service import get_leaderboard, get_user_rank, get_period_stats
 from app.utils.decorators import (
     error_response,
     validate_json,
@@ -93,55 +94,126 @@ def get_user_badges(user_id):
 
 @gamification_bp.route('/leaderboard', methods=['GET'])
 @validate_query_params({
-    'period': {'type': str, 'allowed': ['daily', 'weekly', 'monthly', 'all_time']},
-    'limit': {'type': int, 'min': 1, 'max': 100, 'default': 10}
+    'period': {'type': str, 'allowed': ['daily', 'weekly', 'monthly', 'all_time'], 'default': 'all_time'},
+    'limit': {'type': int, 'min': 1, 'max': 100, 'default': 50}
 })
-def get_leaderboard():
+def get_leaderboard_endpoint():
     """
     Get the user leaderboard.
     
     Query Parameters:
         period (str): Time period filter (daily, weekly, monthly, all_time)
-        limit (int): Number of entries to return (1-100, default: 10)
+        limit (int): Number of entries to return (1-100, default: 50)
     
     Returns:
         - leaderboard: List of users ranked by XP
         - period: The period filter used
+        - count: Number of entries returned
+        - stats: Period statistics (optional)
     """
     try:
         period = request.args.get('period', 'all_time')
-        limit = request.args.get('limit', 10, type=int)
+        limit = request.args.get('limit', 50, type=int)
         
-        # Get top users by XP
-        if limit < 1:
-            limit = 1
-        elif limit > 100:
-            limit = 100
-            
-        top_users = User.query.order_by(User.xp.desc()).limit(limit).all()
+        # Get leaderboard from service
+        leaderboard = get_leaderboard(period=period, limit=limit)
         
-        leaderboard = []
-        for i, user in enumerate(top_users, 1):
-            leaderboard.append({
-                'rank': i,
-                'user_id': user.id,
-                'username': user.username,
-                'avatar_url': user.avatar_url,
-                'xp': user.xp,
-                'points': user.points
-            })
+        # Get period stats
+        stats = get_period_stats(period)
         
         return jsonify({
             'success': True,
             'data': {
                 'leaderboard': leaderboard,
-                'period': period
+                'period': period,
+                'stats': stats
             },
             'count': len(leaderboard)
         }), 200
+    
     except Exception as e:
         logger.error(f"Error fetching leaderboard: {e}")
         return error_response('Failed to fetch leaderboard', 500, 'LEADERBOARD_ERROR')
+
+
+@gamification_bp.route('/leaderboard/me', methods=['GET'])
+@jwt_required()
+@validate_query_params({
+    'period': {'type': str, 'allowed': ['daily', 'weekly', 'monthly', 'all_time'], 'default': 'all_time'}
+})
+def get_my_rank():
+    """
+    Get the current authenticated user's rank on the leaderboard.
+    
+    Query Parameters:
+        period (str): Time period filter (daily, weekly, monthly, all_time)
+    
+    Returns:
+        - user_rank: The user's current rank
+        - user: User details (id, username, avatar_url, xp, points)
+        - surrounding_users: List of users ranked before/after the current user
+        - period: The period used for the query
+        - total_users: Total number of users in the leaderboard
+    """
+    try:
+        user_id = get_jwt_identity()
+        period = request.args.get('period', 'all_time')
+        
+        # Get user rank from service
+        rank_info = get_user_rank(user_id, period=period)
+        
+        return jsonify({
+            'success': True,
+            'data': rank_info
+        }), 200
+    
+    except Exception as e:
+        logger.error(f"Error fetching user rank: {e}")
+        return error_response(str(e), 400, 'RANK_ERROR')
+
+
+@gamification_bp.route('/leaderboard/<int:user_id>', methods=['GET'])
+@validate_query_params({
+    'period': {'type': str, 'allowed': ['daily', 'weekly', 'monthly', 'all_time'], 'default': 'all_time'}
+})
+def get_user_rank_endpoint(user_id):
+    """
+    Get a specific user's rank on the leaderboard.
+    
+    Args:
+        user_id (int): The ID of the user
+    
+    Query Parameters:
+        period (str): Time period filter (daily, weekly, monthly, all_time)
+    
+    Returns:
+        - user_rank: The user's current rank
+        - user: User details (id, username, avatar_url, xp, points)
+        - surrounding_users: List of users ranked before/after the current user
+        - period: The period used for the query
+        - total_users: Total number of users in the leaderboard
+    """
+    try:
+        # Validate user_id
+        if user_id <= 0:
+            return error_response('Invalid user ID', 400, 'INVALID_USER_ID')
+        
+        period = request.args.get('period', 'all_time')
+        
+        # Get user rank from service
+        rank_info = get_user_rank(user_id, period=period)
+        
+        return jsonify({
+            'success': True,
+            'data': rank_info
+        }), 200
+    
+    except Exception as e:
+        logger.error(f"Error fetching user rank for user {user_id}: {e}")
+        error_msg = str(e)
+        if 'not found' in error_msg.lower():
+            return error_response('User not found', 404, 'USER_NOT_FOUND')
+        return error_response('Failed to fetch user rank', 500, 'RANK_ERROR')
 
 
 # ============================================================================
