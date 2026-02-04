@@ -224,3 +224,36 @@ class APIException(Exception):
         self.error_code = error_code
         super().__init__(self.message)
 
+
+def admin_required(f):
+    """
+    Decorator to require admin role for an endpoint.
+    Must be used AFTER @jwt_required() decorator.
+    
+    Usage:
+        @app.route('/admin/users')
+        @jwt_required()
+        @admin_required
+        def admin_users():
+            ...
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        from flask_jwt_extended import get_jwt_identity
+        from app.models.user import User
+        
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        
+        if not user:
+            return error_response('User not found', 404, 'USER_NOT_FOUND')
+        
+        if user.role != 'admin':
+            return error_response(
+                'Admin access required',
+                403,
+                'ADMIN_REQUIRED'
+            )
+        
+        return f(*args, **kwargs)
+    return decorated_function
