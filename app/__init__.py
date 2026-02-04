@@ -35,6 +35,7 @@ def create_app():
     from app.routes.resources import resources_bp
     from app.routes.gamification import gamification_bp
     from app.routes.comments import comments_bp
+    from app.routes.admin import admin_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(users_bp, url_prefix='/api/users')
@@ -42,6 +43,7 @@ def create_app():
     app.register_blueprint(resources_bp, url_prefix='/api/resources')
     app.register_blueprint(gamification_bp, url_prefix='/api/gamification')
     app.register_blueprint(comments_bp, url_prefix='/api/comments')
+    app.register_blueprint(admin_bp, url_prefix='/api/admin')
     
     @app.route('/api/health')
     def health_check():
