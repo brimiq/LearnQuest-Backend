@@ -35,8 +35,8 @@ All demo accounts use the password: **`demo123`**
 ## Quick Start
 
 ### Prerequisites
-- Python 3.8+
-- pipenv
+- Python 3.8+ (or Python 3.14 with UV)
+- pipenv or UV (Python package manager)
 
 ### Installation
 
