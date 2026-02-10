@@ -20,7 +20,12 @@ def get_learning_path(path_id):
         return jsonify({'error': 'Learning path not found'}), 404
     
     path_data = path.to_dict()
-    path_data['modules'] = [module.to_dict() for module in path.modules.order_by(Module.order).all()]
+    modules_list = []
+    for module in path.modules.order_by(Module.order).all():
+        mod_data = module.to_dict()
+        mod_data['resources'] = [r.to_dict() for r in module.resources.order_by(Resource.order).all()]
+        modules_list.append(mod_data)
+    path_data['modules'] = modules_list
     
     return jsonify({'learning_path': path_data}), 200
 
