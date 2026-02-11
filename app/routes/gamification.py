@@ -156,7 +156,7 @@ def get_my_rank():
         - total_users: Total number of users in the leaderboard
     """
     try:
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         period = request.args.get('period', 'all_time')
         
         # Get user rank from service
@@ -326,7 +326,7 @@ def add_xp():
         - total_xp: Updated total XP
         - xp_added: Amount added
     """
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     user = User.query.get(user_id)
     if not user:
@@ -365,6 +365,135 @@ def add_xp():
 # STREAK ENDPOINTS
 # ============================================================================
 
+@gamification_bp.route('/badges/check', methods=['POST'])
+@jwt_required()
+@handle_db_errors
+def check_and_award_badges():
+    """
+    Check user's activity and award any earned badges.
+    Called after completing modules, quizzes, or other activities.
+    """
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return error_response('User not found', 404, 'USER_NOT_FOUND')
+
+    from app.models.quiz import QuizAttempt
+    from app.models.progress import UserProgress
+    from app.models.comment import Comment
+
+    awarded = []
+    existing = {ub.badge_id for ub in UserBadge.query.filter_by(user_id=user_id).all()}
+
+    # Helper: award badge by name if not already earned
+    def try_award(badge_name):
+        badge = Badge.query.filter_by(name=badge_name).first()
+        if badge and badge.id not in existing:
+            db.session.add(UserBadge(user_id=user_id, badge_id=badge.id))
+            existing.add(badge.id)
+            awarded.append(badge.to_dict())
+
+    # 1. First Steps - completed at least 1 resource
+    progress_records = UserProgress.query.filter_by(user_id=user_id).all()
+    total_completed_resources = sum(len(p.get_completed_resources()) for p in progress_records)
+    if total_completed_resources >= 1:
+        try_award('First Steps')
+
+    # 2. Path Finder - completed at least 1 learning path
+    completed_paths = UserProgress.query.filter_by(user_id=user_id, status='completed').count()
+    if completed_paths >= 1:
+        try_award('Path Finder')
+
+    # 3. Week Warrior - 7-day streak
+    if user.streak_days >= 7:
+        try_award('Week Warrior')
+
+    # 4. Streak Legend - 30-day streak
+    if user.streak_days >= 30:
+        try_award('Streak Legend')
+
+    # 5. Quiz Master - 5 perfect quizzes
+    perfect_quizzes = QuizAttempt.query.filter_by(user_id=user_id).filter(QuizAttempt.score == 100).count()
+    if perfect_quizzes >= 5:
+        try_award('Quiz Master')
+
+    # 6. Social Butterfly - 10 comments
+    comment_count = Comment.query.filter_by(user_id=user_id).count()
+    if comment_count >= 10:
+        try_award('Social Butterfly')
+
+    # 7. Code Ninja - 50 resources completed
+    if total_completed_resources >= 50:
+        try_award('Code Ninja')
+
+    # 8. Mentor - contributor/admin with content
+    if user.role in ('contributor', 'admin'):
+        from app.models.learning_path import LearningPath
+        created_paths = LearningPath.query.filter_by(creator_id=user_id).count()
+        if created_paths >= 1:
+            try_award('Mentor')
+
+    if awarded:
+        # Award XP for new badges
+        xp_bonus = len(awarded) * 50
+        user.xp += xp_bonus
+        user.points += len(awarded) * 25
+        db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'new_badges': awarded,
+            'total_badges': len(existing),
+            'xp_bonus': len(awarded) * 50 if awarded else 0
+        }
+    }), 200
+
+
+@gamification_bp.route('/achievements/progress', methods=['GET'])
+@jwt_required()
+def get_achievements_progress():
+    """Get user's progress toward each achievement."""
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return error_response('User not found', 404, 'USER_NOT_FOUND')
+
+    from app.models.quiz import QuizAttempt
+    from app.models.progress import UserProgress
+
+    progress_records = UserProgress.query.filter_by(user_id=user_id).all()
+    total_completed_resources = sum(len(p.get_completed_resources()) for p in progress_records)
+    total_completed_modules = sum(len(p.get_completed_modules()) for p in progress_records)
+    completed_paths = UserProgress.query.filter_by(user_id=user_id, status='completed').count()
+
+    achievements = Achievement.query.all()
+    result = []
+    for a in achievements:
+        current = 0
+        if a.requirement_type == 'modules_completed':
+            current = total_completed_modules
+        elif a.requirement_type == 'paths_completed':
+            current = completed_paths
+        elif a.requirement_type == 'streak':
+            current = user.streak_days
+        elif a.requirement_type == 'resources_completed':
+            current = total_completed_resources
+
+        result.append({
+            **a.to_dict(),
+            'current': current,
+            'target': a.requirement_value or 0,
+            'unlocked': current >= (a.requirement_value or 0)
+        })
+
+    return jsonify({
+        'success': True,
+        'data': {'achievements': result},
+        'count': len(result)
+    }), 200
+
+
 @gamification_bp.route('/streak/update', methods=['POST'])
 @jwt_required()
 @handle_db_errors
@@ -383,7 +512,7 @@ def streak_update():
         - total_xp: Updated total XP
         - bonuses: List of awarded bonuses (if any)
     """
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     user = User.query.get(user_id)
     if not user:
@@ -430,7 +559,7 @@ def streak_status():
         - hours_since_active: Hours since last activity
         - message: Human-readable status message
     """
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     status = get_streak_status(user_id)
     

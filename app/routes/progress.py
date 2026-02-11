@@ -16,7 +16,7 @@ progress_bp = Blueprint('progress', __name__)
 @jwt_required()
 def enroll_in_path(path_id):
     """Enroll user in a learning path."""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     path = LearningPath.query.get(path_id)
     if not path:
@@ -66,7 +66,7 @@ def enroll_in_path(path_id):
 @jwt_required()
 def get_my_paths():
     """Get all learning paths the user is enrolled in."""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     progress_entries = UserProgress.query.filter_by(
         user_id=user_id
@@ -89,7 +89,7 @@ def get_my_paths():
 @jwt_required()
 def get_path_progress(path_id):
     """Get user's progress for a specific learning path."""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     progress = UserProgress.query.filter_by(
         user_id=user_id,
@@ -112,7 +112,7 @@ def get_path_progress(path_id):
 @jwt_required()
 def complete_resource(resource_id):
     """Mark a resource as completed."""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     
     resource = Resource.query.get(resource_id)
@@ -188,7 +188,7 @@ def complete_resource(resource_id):
 @jwt_required()
 def complete_module(module_id):
     """Mark a module as completed."""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     
     module = Module.query.get(module_id)

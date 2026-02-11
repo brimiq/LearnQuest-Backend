@@ -16,7 +16,7 @@ def admin_required(fn):
     @wraps(fn)
     @jwt_required()
     def wrapper(*args, **kwargs):
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         user = User.query.get(user_id)
         if not user or user.role != 'admin':
             return jsonify({'error': 'Admin access required'}), 403
@@ -164,7 +164,7 @@ def get_all_users():
 @admin_required
 def change_user_role(user_id):
     """Change a user's role."""
-    admin_id = get_jwt_identity()
+    admin_id = int(get_jwt_identity())
     if admin_id == user_id:
         return jsonify({'error': 'Cannot change your own role'}), 400
 
@@ -192,7 +192,7 @@ def change_user_role(user_id):
 @admin_required
 def delete_user(user_id):
     """Delete a user (soft-delete by deactivating)."""
-    admin_id = get_jwt_identity()
+    admin_id = int(get_jwt_identity())
     if admin_id == user_id:
         return jsonify({'error': 'Cannot delete yourself'}), 400
 
@@ -214,7 +214,7 @@ def delete_user(user_id):
 @admin_required
 def suspend_user(user_id):
     """Suspend or reactivate a user."""
-    admin_id = get_jwt_identity()
+    admin_id = int(get_jwt_identity())
     if admin_id == user_id:
         return jsonify({'error': 'Cannot suspend yourself'}), 400
     
@@ -260,7 +260,7 @@ def dismiss_report(report_id):
     if not report:
         return jsonify({'error': 'Report not found'}), 404
     
-    admin_id = get_jwt_identity()
+    admin_id = int(get_jwt_identity())
     report.status = 'dismissed'
     report.resolved_at = datetime.utcnow()
     report.resolved_by = admin_id
@@ -280,7 +280,7 @@ def action_report(report_id):
     data = request.get_json() or {}
     action = data.get('action', 'warn')
     
-    admin_id = get_jwt_identity()
+    admin_id = int(get_jwt_identity())
     report.status = 'actioned'
     report.action_taken = action
     report.resolved_at = datetime.utcnow()

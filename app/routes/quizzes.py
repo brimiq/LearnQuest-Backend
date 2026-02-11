@@ -57,7 +57,7 @@ def get_quiz(quiz_id):
 @jwt_required()
 def submit_quiz(quiz_id):
     """Submit quiz answers and get results."""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     if not user:
         return jsonify({'error': 'User not found'}), 404
@@ -153,7 +153,7 @@ def submit_quiz(quiz_id):
 @jwt_required()
 def get_quiz_attempts(quiz_id):
     """Get user's attempts for a specific quiz."""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     attempts = QuizAttempt.query.filter_by(
         user_id=user_id,
@@ -171,7 +171,7 @@ def get_quiz_attempts(quiz_id):
 @jwt_required()
 def get_my_attempts():
     """Get all quiz attempts for the current user."""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     attempts = QuizAttempt.query.filter_by(
         user_id=user_id

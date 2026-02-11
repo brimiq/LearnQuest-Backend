@@ -33,7 +33,7 @@ def get_learning_path(path_id):
 @learning_paths_bp.route('/', methods=['POST'])
 @jwt_required()
 def create_learning_path():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     
     if not user or user.role not in ['admin', 'contributor']:
@@ -63,7 +63,7 @@ def create_learning_path():
 @learning_paths_bp.route('/<int:path_id>/modules', methods=['POST'])
 @jwt_required()
 def add_module(path_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     path = LearningPath.query.get(path_id)
     
     if not path:
