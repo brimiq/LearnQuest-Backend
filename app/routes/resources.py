@@ -1,7 +1,10 @@
-from flask import Blueprint, request, jsonify
+import os
+from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required
 from app import db
 from app.models.learning_path import Resource
+
+PDF_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'resource_docs', 'pdf')
 
 resources_bp = Blueprint('resources', __name__)
 
@@ -51,3 +54,18 @@ def rate_resource(resource_id):
         'message': 'Rating submitted!',
         'new_rating': resource.rating
     }), 200
+
+
+@resources_bp.route('/<int:resource_id>/download', methods=['GET'])
+def download_resource(resource_id):
+    resource = Resource.query.get(resource_id)
+    if not resource:
+        return jsonify({'error': 'Resource not found'}), 404
+
+    pdf_path = os.path.join(PDF_DIR, f'{resource_id}.pdf')
+    if not os.path.exists(pdf_path):
+        return jsonify({'error': 'PDF not available for this resource'}), 404
+
+    safe_title = resource.title.replace(' ', '_').replace('/', '-')[:60]
+    filename = f'{safe_title}_Notes.pdf'
+    return send_file(pdf_path, as_attachment=True, download_name=filename, mimetype='application/pdf')
