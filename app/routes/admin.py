@@ -4,6 +4,7 @@ from app import db
 from app.models.user import User
 from app.models.learning_path import LearningPath, Module, Resource
 from app.models.gamification import Challenge, Badge
+from app.models.report import Report
 from functools import wraps
 from datetime import datetime, timedelta
 
@@ -207,3 +208,84 @@ def delete_user(user_id):
         'success': True,
         'message': f'User {username} deleted'
     }), 200
+
+
+@admin_bp.route('/users/<int:user_id>/suspend', methods=['PUT'])
+@admin_required
+def suspend_user(user_id):
+    """Suspend or reactivate a user."""
+    admin_id = get_jwt_identity()
+    if admin_id == user_id:
+        return jsonify({'error': 'Cannot suspend yourself'}), 400
+    
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    if user.status == 'suspended':
+        user.status = 'active'
+        message = f'User {user.username} reactivated'
+    else:
+        user.status = 'suspended'
+        message = f'User {user.username} suspended'
+    
+    db.session.commit()
+    return jsonify({'success': True, 'message': message, 'data': {'user': user.to_dict()}}), 200
+
+
+@admin_bp.route('/reports', methods=['GET'])
+@admin_required
+def get_reports():
+    """Get all reports for moderation."""
+    status = request.args.get('status', 'pending')
+    
+    query = Report.query
+    if status != 'all':
+        query = query.filter_by(status=status)
+    
+    reports = query.order_by(Report.created_at.desc()).all()
+    
+    return jsonify({
+        'success': True,
+        'data': {'reports': [r.to_dict() for r in reports]},
+        'count': len(reports)
+    }), 200
+
+
+@admin_bp.route('/reports/<int:report_id>/dismiss', methods=['POST'])
+@admin_required
+def dismiss_report(report_id):
+    """Dismiss a report."""
+    report = Report.query.get(report_id)
+    if not report:
+        return jsonify({'error': 'Report not found'}), 404
+    
+    admin_id = get_jwt_identity()
+    report.status = 'dismissed'
+    report.resolved_at = datetime.utcnow()
+    report.resolved_by = admin_id
+    
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Report dismissed'}), 200
+
+
+@admin_bp.route('/reports/<int:report_id>/action', methods=['POST'])
+@admin_required
+def action_report(report_id):
+    """Take action on a report."""
+    report = Report.query.get(report_id)
+    if not report:
+        return jsonify({'error': 'Report not found'}), 404
+    
+    data = request.get_json() or {}
+    action = data.get('action', 'warn')
+    
+    admin_id = get_jwt_identity()
+    report.status = 'actioned'
+    report.action_taken = action
+    report.resolved_at = datetime.utcnow()
+    report.resolved_by = admin_id
+    report.admin_notes = data.get('notes', '')
+    
+    db.session.commit()
+    return jsonify({'success': True, 'message': f'Report actioned: {action}'}), 200

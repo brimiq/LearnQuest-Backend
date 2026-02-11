@@ -1,585 +1,392 @@
 """
-Seed data for LearnQuest database.
+Seed data for LearnQuest database with PostgreSQL.
 Run with: python seed_data.py
 """
 from app import create_app, db
 from app.models import (
-    User, Badge, Achievement, Challenge, 
+    User, Badge, Achievement, Challenge,
     LearningPath, Module, Resource,
-    Quiz, Question
+    Quiz, Question, Report, Notification
 )
 from datetime import datetime, timedelta
 import json
 
 
 def seed_badges():
-    """Create initial badges."""
     badges = [
-        {
-            'name': 'Early Bird',
-            'description': 'Complete a lesson before 8 AM',
-            'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=sun&backgroundColor=ffd700',
-            'badge_type': 'bronze',
-            'is_seasonal': False
-        },
-        {
-            'name': 'Week Warrior',
-            'description': 'Maintain a 7-day learning streak',
-            'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=fire&backgroundColor=ff6b35',
-            'badge_type': 'silver',
-            'is_seasonal': False
-        },
-        {
-            'name': 'Quiz Master',
-            'description': 'Score 100% on 5 quizzes',
-            'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=brain&backgroundColor=9333ea',
-            'badge_type': 'gold',
-            'is_seasonal': False
-        },
-        {
-            'name': 'Social Butterfly',
-            'description': 'Post 10 helpful comments',
-            'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=chat&backgroundColor=06b6d4',
-            'badge_type': 'bronze',
-            'is_seasonal': False
-        },
-        {
-            'name': 'Code Ninja',
-            'description': 'Complete 50 coding challenges',
-            'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=code&backgroundColor=22c55e',
-            'badge_type': 'platinum',
-            'is_seasonal': False
-        },
-        {
-            'name': 'Mentor',
-            'description': 'Help 10 other learners',
-            'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=heart&backgroundColor=ec4899',
-            'badge_type': 'gold',
-            'is_seasonal': False
-        },
-        {
-            'name': 'First Steps',
-            'description': 'Complete your first lesson',
-            'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=rocket&backgroundColor=3b82f6',
-            'badge_type': 'bronze',
-            'is_seasonal': False
-        },
-        {
-            'name': 'Path Finder',
-            'description': 'Complete your first learning path',
-            'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=map&backgroundColor=10b981',
-            'badge_type': 'silver',
-            'is_seasonal': False
-        },
-        {
-            'name': 'Data Science Month',
-            'description': 'Complete 3 data science paths in March',
-            'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=chart&backgroundColor=f59e0b',
-            'badge_type': 'special',
-            'is_seasonal': True
-        },
-        {
-            'name': 'Streak Legend',
-            'description': 'Maintain a 30-day learning streak',
-            'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=flame&backgroundColor=ef4444',
-            'badge_type': 'platinum',
-            'is_seasonal': False
-        }
+        {'name': 'First Steps', 'description': 'Complete your first lesson', 'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=rocket&backgroundColor=3b82f6', 'badge_type': 'bronze', 'is_seasonal': False},
+        {'name': 'Week Warrior', 'description': 'Maintain a 7-day learning streak', 'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=fire&backgroundColor=ff6b35', 'badge_type': 'silver', 'is_seasonal': False},
+        {'name': 'Quiz Master', 'description': 'Score 100% on 5 quizzes', 'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=brain&backgroundColor=9333ea', 'badge_type': 'gold', 'is_seasonal': False},
+        {'name': 'Social Butterfly', 'description': 'Post 10 helpful comments', 'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=chat&backgroundColor=06b6d4', 'badge_type': 'bronze', 'is_seasonal': False},
+        {'name': 'Code Ninja', 'description': 'Complete 50 coding challenges', 'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=code&backgroundColor=22c55e', 'badge_type': 'platinum', 'is_seasonal': False},
+        {'name': 'Mentor', 'description': 'Help 10 other learners', 'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=heart&backgroundColor=ec4899', 'badge_type': 'gold', 'is_seasonal': False},
+        {'name': 'Path Finder', 'description': 'Complete your first learning path', 'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=map&backgroundColor=10b981', 'badge_type': 'silver', 'is_seasonal': False},
+        {'name': 'Early Bird', 'description': 'Complete a lesson before 8 AM', 'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=sun&backgroundColor=ffd700', 'badge_type': 'bronze', 'is_seasonal': False},
+        {'name': 'Streak Legend', 'description': 'Maintain a 30-day learning streak', 'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=flame&backgroundColor=ef4444', 'badge_type': 'platinum', 'is_seasonal': False},
+        {'name': 'Data Science Month', 'description': 'Complete 3 data science paths in March', 'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=chart&backgroundColor=f59e0b', 'badge_type': 'special', 'is_seasonal': True},
     ]
-    
-    for badge_data in badges:
-        existing = Badge.query.filter_by(name=badge_data['name']).first()
-        if not existing:
-            badge = Badge(**badge_data)
-            db.session.add(badge)
-    
+    for b in badges:
+        if not Badge.query.filter_by(name=b['name']).first():
+            db.session.add(Badge(**b))
     db.session.commit()
     print(f"Created {len(badges)} badges")
 
 
 def seed_achievements():
-    """Create achievements."""
     achievements = [
-        {
-            'name': 'Getting Started',
-            'description': 'Complete your first module',
-            'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=star&backgroundColor=ffd700',
-            'xp_reward': 50,
-            'points_reward': 25,
-            'requirement_type': 'modules_completed',
-            'requirement_value': 1
-        },
-        {
-            'name': 'Dedicated Learner',
-            'description': 'Complete 10 modules',
-            'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=trophy&backgroundColor=f59e0b',
-            'xp_reward': 200,
-            'points_reward': 100,
-            'requirement_type': 'modules_completed',
-            'requirement_value': 10
-        },
-        {
-            'name': 'Path Master',
-            'description': 'Complete 5 learning paths',
-            'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=crown&backgroundColor=9333ea',
-            'xp_reward': 500,
-            'points_reward': 250,
-            'requirement_type': 'paths_completed',
-            'requirement_value': 5
-        },
-        {
-            'name': 'Streak Starter',
-            'description': 'Maintain a 3-day streak',
-            'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=fire&backgroundColor=ef4444',
-            'xp_reward': 30,
-            'points_reward': 15,
-            'requirement_type': 'streak',
-            'requirement_value': 3
-        },
-        {
-            'name': 'Knowledge Seeker',
-            'description': 'Earn 1000 XP',
-            'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=gem&backgroundColor=06b6d4',
-            'xp_reward': 100,
-            'points_reward': 50,
-            'requirement_type': 'xp_earned',
-            'requirement_value': 1000
-        }
+        {'name': 'Getting Started', 'description': 'Complete your first module', 'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=star&backgroundColor=ffd700', 'xp_reward': 50, 'points_reward': 25, 'requirement_type': 'modules_completed', 'requirement_value': 1},
+        {'name': 'Dedicated Learner', 'description': 'Complete 10 modules', 'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=trophy&backgroundColor=f59e0b', 'xp_reward': 200, 'points_reward': 100, 'requirement_type': 'modules_completed', 'requirement_value': 10},
+        {'name': 'Path Master', 'description': 'Complete 3 learning paths', 'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=crown&backgroundColor=9333ea', 'xp_reward': 500, 'points_reward': 250, 'requirement_type': 'paths_completed', 'requirement_value': 3},
+        {'name': 'On Fire', 'description': 'Maintain a 14-day streak', 'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=fire&backgroundColor=ef4444', 'xp_reward': 150, 'points_reward': 75, 'requirement_type': 'streak', 'requirement_value': 14},
+        {'name': 'Knowledge Seeker', 'description': 'Complete 50 resources', 'icon_url': 'https://api.dicebear.com/7.x/icons/svg?seed=gem&backgroundColor=06b6d4', 'xp_reward': 300, 'points_reward': 150, 'requirement_type': 'resources_completed', 'requirement_value': 50},
     ]
-    
-    for ach_data in achievements:
-        existing = Achievement.query.filter_by(name=ach_data['name']).first()
-        if not existing:
-            achievement = Achievement(**ach_data)
-            db.session.add(achievement)
-    
+    for a in achievements:
+        if not Achievement.query.filter_by(name=a['name']).first():
+            db.session.add(Achievement(**a))
     db.session.commit()
     print(f"Created {len(achievements)} achievements")
 
 
 def seed_challenges():
-    """Create active challenges."""
     now = datetime.utcnow()
     challenges = [
-        {
-            'title': 'CSS Grid Master',
-            'description': 'Complete the CSS Grid layout module and score at least 80% on the quiz.',
-            'challenge_type': 'weekly',
-            'xp_reward': 150,
-            'points_reward': 75,
-            'requirement_type': 'quiz_score',
-            'requirement_value': 80,
-            'start_date': now,
-            'end_date': now + timedelta(days=7),
-            'is_active': True
-        },
-        {
-            'title': 'React Fundamentals Sprint',
-            'description': 'Complete 3 React modules in one week.',
-            'challenge_type': 'weekly',
-            'xp_reward': 200,
-            'points_reward': 100,
-            'requirement_type': 'modules_completed',
-            'requirement_value': 3,
-            'start_date': now,
-            'end_date': now + timedelta(days=7),
-            'is_active': True
-        },
-        {
-            'title': 'Python Marathon',
-            'description': 'Complete the entire Python Basics learning path.',
-            'challenge_type': 'monthly',
-            'xp_reward': 500,
-            'points_reward': 250,
-            'requirement_type': 'path_completed',
-            'requirement_value': 1,
-            'start_date': now,
-            'end_date': now + timedelta(days=30),
-            'is_active': True
-        },
-        {
-            'title': 'Community Helper',
-            'description': 'Post 5 helpful comments on learning resources.',
-            'challenge_type': 'weekly',
-            'xp_reward': 100,
-            'points_reward': 50,
-            'requirement_type': 'comments_posted',
-            'requirement_value': 5,
-            'start_date': now,
-            'end_date': now + timedelta(days=7),
-            'is_active': True
-        }
+        {'title': 'Weekly Sprint: Complete 5 Lessons', 'description': 'Complete any 5 lessons this week to earn bonus XP and a special badge!', 'challenge_type': 'weekly', 'xp_reward': 100, 'points_reward': 50, 'requirement_type': 'lessons_completed', 'requirement_value': 5, 'start_date': now, 'end_date': now + timedelta(days=7), 'is_active': True},
+        {'title': 'Monthly Master: Finish 2 Learning Paths', 'description': 'Complete 2 full learning paths this month. Show your dedication!', 'challenge_type': 'monthly', 'xp_reward': 500, 'points_reward': 250, 'requirement_type': 'paths_completed', 'requirement_value': 2, 'start_date': now, 'end_date': now + timedelta(days=30), 'is_active': True},
+        {'title': 'Quiz Champion: Score 90%+ on 3 Quizzes', 'description': 'Ace 3 quizzes with a score of 90% or higher this week.', 'challenge_type': 'weekly', 'xp_reward': 150, 'points_reward': 75, 'requirement_type': 'quiz_score', 'requirement_value': 3, 'start_date': now, 'end_date': now + timedelta(days=7), 'is_active': True},
+        {'title': 'Spring Learning Festival', 'description': 'Participate in the Spring Learning Festival! Complete any 10 resources to earn the exclusive Spring badge.', 'challenge_type': 'seasonal', 'xp_reward': 300, 'points_reward': 150, 'requirement_type': 'resources_completed', 'requirement_value': 10, 'start_date': now, 'end_date': now + timedelta(days=60), 'is_active': True},
     ]
-    
-    for ch_data in challenges:
-        existing = Challenge.query.filter_by(title=ch_data['title']).first()
-        if not existing:
-            challenge = Challenge(**ch_data)
-            db.session.add(challenge)
-    
+    for c in challenges:
+        if not Challenge.query.filter_by(title=c['title']).first():
+            db.session.add(Challenge(**c))
     db.session.commit()
     print(f"Created {len(challenges)} challenges")
 
 
+def seed_users():
+    users_data = [
+        {'username': 'admin', 'email': 'admin@learnquest.com', 'password': 'demo123', 'role': 'admin', 'xp': 5000, 'points': 2500, 'streak_days': 30, 'hours_learned': 120, 'bio': 'Platform administrator', 'avatar_url': 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin'},
+        {'username': 'creator', 'email': 'creator@learnquest.com', 'password': 'demo123', 'role': 'contributor', 'xp': 3500, 'points': 1750, 'streak_days': 14, 'hours_learned': 80, 'bio': 'Full-stack developer & content creator', 'avatar_url': 'https://api.dicebear.com/7.x/avataaars/svg?seed=creator'},
+        {'username': 'alex_learner', 'email': 'alex@example.com', 'password': 'demo123', 'role': 'learner', 'xp': 1200, 'points': 600, 'streak_days': 7, 'hours_learned': 25, 'bio': 'Learning web development!', 'avatar_url': 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex'},
+        {'username': 'sarah_dev', 'email': 'sarah@example.com', 'password': 'demo123', 'role': 'learner', 'xp': 2800, 'points': 1400, 'streak_days': 21, 'hours_learned': 55, 'bio': 'Aspiring data scientist', 'avatar_url': 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah'},
+        {'username': 'mike_coder', 'email': 'mike@example.com', 'password': 'demo123', 'role': 'contributor', 'xp': 4200, 'points': 2100, 'streak_days': 45, 'hours_learned': 95, 'bio': 'Backend engineer, Python enthusiast', 'avatar_url': 'https://api.dicebear.com/7.x/avataaars/svg?seed=mike'},
+    ]
+    for u in users_data:
+        if not User.query.filter_by(email=u['email']).first():
+            user = User(
+                username=u['username'], email=u['email'], role=u['role'],
+                xp=u['xp'], points=u['points'], streak_days=u['streak_days'],
+                hours_learned=u['hours_learned'], bio=u['bio'], avatar_url=u['avatar_url']
+            )
+            user.set_password(u['password'])
+            db.session.add(user)
+    db.session.commit()
+    print(f"Created {len(users_data)} demo users")
+
+
 def seed_learning_paths():
-    """Create sample learning paths with modules, resources, and quizzes."""
-    
-    # First, create a demo user as creator
-    demo_user = User.query.filter_by(username='demo_creator').first()
-    if not demo_user:
-        demo_user = User(
-            username='demo_creator',
-            email='creator@learnquest.com',
-            role='contributor',
-            xp=5000,
-            points=2500,
-            streak_days=15,
-            hours_learned=48.5,
-            avatar_url='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop',
-            bio='Senior developer and educator passionate about teaching.'
-        )
-        demo_user.set_password('demo123')
-        db.session.add(demo_user)
-        db.session.commit()
-    
-    learning_paths_data = [
+    creator = User.query.filter_by(email='creator@learnquest.com').first()
+    mike = User.query.filter_by(email='mike@example.com').first()
+    if not creator:
+        return
+
+    paths_data = [
         {
-            'title': 'Full Stack Web Development',
-            'description': 'Master modern web development from frontend to backend. Learn React, Node.js, databases, and deployment.',
-            'category': 'Development',
-            'difficulty': 'intermediate',
+            'title': 'Full-Stack Web Development',
+            'description': 'Master HTML, CSS, JavaScript, React, and Node.js to become a complete web developer. This comprehensive path takes you from zero to building production-ready web applications.',
+            'category': 'Web Development',
+            'difficulty': 'beginner',
             'image_url': 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop',
             'xp_reward': 500,
+            'creator_id': creator.id,
             'is_published': True,
             'is_approved': True,
-            'rating': 4.8,
-            'enrolled_count': 2450,
+            'rating': 4.7,
+            'total_ratings': 128,
+            'enrolled_count': 342,
             'modules': [
                 {
-                    'title': 'Module 1: HTML & CSS Foundations',
-                    'description': 'Learn the building blocks of the web.',
+                    'title': 'HTML & CSS Fundamentals',
+                    'description': 'Learn the building blocks of the web',
+                    'order': 1,
                     'xp_reward': 75,
                     'resources': [
-                        {'title': 'Introduction to HTML', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=qz0aGYrrlhU'},
-                        {'title': 'CSS Box Model Explained', 'type': 'article', 'url': 'https://developer.mozilla.org/en-US/docs/Learn/CSS/Building_blocks/The_box_model'},
-                        {'title': 'Flexbox Tutorial', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=JJSoEo8JSnc'},
+                        {'title': 'HTML Crash Course For Absolute Beginners', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=UB1O30fR-EE', 'description': 'Complete HTML tutorial for beginners by Traversy Media'},
+                        {'title': 'CSS Crash Course For Absolute Beginners', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=yfoY53QXEnI', 'description': 'Learn CSS from scratch with Traversy Media'},
+                        {'title': 'Flexbox in 15 Minutes', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=fYq5PXgSsbE', 'description': 'Quick and clear flexbox tutorial by Web Dev Simplified'},
+                        {'title': 'MDN CSS Box Model', 'type': 'article', 'url': 'https://developer.mozilla.org/en-US/docs/Learn/CSS/Building_blocks/The_box_model', 'description': 'Official Mozilla documentation on the CSS Box Model'},
                     ],
                     'quiz': {
-                        'title': 'HTML & CSS Quiz',
+                        'title': 'HTML & CSS Basics Quiz',
+                        'description': 'Test your knowledge of HTML and CSS fundamentals',
                         'passing_score': 70,
+                        'xp_reward': 50,
                         'questions': [
-                            {'text': 'What does HTML stand for?', 'options': ['Hyper Text Markup Language', 'High Tech Modern Language', 'Hyper Transfer Markup Language', 'Home Tool Markup Language'], 'correct': 0, 'explanation': 'HTML stands for Hyper Text Markup Language.'},
-                            {'text': 'Which CSS property is used to change text color?', 'options': ['text-color', 'font-color', 'color', 'text-style'], 'correct': 2, 'explanation': 'The color property is used to set the text color.'},
-                            {'text': 'What is the correct HTML element for the largest heading?', 'options': ['<heading>', '<h6>', '<head>', '<h1>'], 'correct': 3, 'explanation': '<h1> defines the most important heading.'},
-                            {'text': 'Which property is used to add space inside an element?', 'options': ['margin', 'padding', 'spacing', 'border'], 'correct': 1, 'explanation': 'Padding adds space inside an element, between its content and border.'},
-                            {'text': 'How do you select an element with id "demo"?', 'options': ['.demo', '#demo', 'demo', '*demo'], 'correct': 1, 'explanation': 'The # symbol is used to select elements by ID in CSS.'},
+                            {'text': 'What does HTML stand for?', 'type': 'multiple_choice', 'options': ['Hyper Text Markup Language', 'High Tech Modern Language', 'Hyper Transfer Markup Language', 'Home Tool Markup Language'], 'correct': 0, 'explanation': 'HTML stands for Hyper Text Markup Language, the standard markup language for web pages.', 'points': 10},
+                            {'text': 'Which CSS property is used to change the text color?', 'type': 'multiple_choice', 'options': ['font-color', 'text-color', 'color', 'foreground-color'], 'correct': 2, 'explanation': 'The "color" property is used to set the text color in CSS.', 'points': 10},
+                            {'text': 'Which HTML tag is used for the largest heading?', 'type': 'multiple_choice', 'options': ['<heading>', '<h6>', '<h1>', '<head>'], 'correct': 2, 'explanation': '<h1> defines the largest heading. Headings go from <h1> (largest) to <h6> (smallest).', 'points': 10},
+                            {'text': 'CSS Flexbox is a one-dimensional layout method.', 'type': 'true_false', 'options': ['True', 'False'], 'correct': 0, 'explanation': 'Flexbox is indeed a one-dimensional layout method for arranging items in rows or columns.', 'points': 10},
+                            {'text': 'Which CSS property controls the space between elements?', 'type': 'multiple_choice', 'options': ['spacing', 'margin', 'padding', 'Both margin and padding'], 'correct': 3, 'explanation': 'Both margin (outside space) and padding (inside space) control spacing.', 'points': 10},
                         ]
                     }
                 },
                 {
-                    'title': 'Module 2: JavaScript Essentials',
-                    'description': 'Master JavaScript fundamentals and ES6+ features.',
+                    'title': 'JavaScript Essentials',
+                    'description': 'Master JavaScript fundamentals and modern ES6+ features',
+                    'order': 2,
                     'xp_reward': 100,
                     'resources': [
-                        {'title': 'JavaScript Basics', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=W6NZfCO5SIk'},
-                        {'title': 'ES6 Features Overview', 'type': 'article', 'url': 'https://www.freecodecamp.org/news/javascript-es6-tutorial/'},
-                        {'title': 'Async/Await Explained', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=V_Kr9OSfDeU'},
+                        {'title': 'JavaScript Crash Course For Beginners', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=hdI2bqOjy3c', 'description': 'Complete JS tutorial by Traversy Media'},
+                        {'title': 'JavaScript ES6 Tutorial', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=NCwa_xi0Uuc', 'description': 'ES6 features explained by Programming with Mosh'},
+                        {'title': 'Async JavaScript - Callbacks, Promises, Async/Await', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=PoRJizFvM7s', 'description': 'Master asynchronous JavaScript patterns'},
+                        {'title': 'JavaScript.info - Modern Tutorial', 'type': 'article', 'url': 'https://javascript.info/', 'description': 'Comprehensive modern JavaScript tutorial'},
                     ],
                     'quiz': {
-                        'title': 'JavaScript Quiz',
+                        'title': 'JavaScript Fundamentals Quiz',
+                        'description': 'Test your JavaScript knowledge',
                         'passing_score': 70,
+                        'xp_reward': 50,
                         'questions': [
-                            {'text': 'Which keyword declares a block-scoped variable?', 'options': ['var', 'let', 'const', 'Both let and const'], 'correct': 3, 'explanation': 'Both let and const declare block-scoped variables.'},
-                            {'text': 'What is the output of typeof []?', 'options': ['array', 'object', 'list', 'undefined'], 'correct': 1, 'explanation': 'Arrays in JavaScript are technically objects.'},
-                            {'text': 'Which method adds an element to the end of an array?', 'options': ['push()', 'pop()', 'shift()', 'unshift()'], 'correct': 0, 'explanation': 'push() adds elements to the end of an array.'},
-                            {'text': 'What does === check for?', 'options': ['Value only', 'Type only', 'Value and type', 'Reference'], 'correct': 2, 'explanation': '=== checks for both value and type equality.'},
-                            {'text': 'What is a closure?', 'options': ['A way to close browser tabs', 'A function with access to its outer scope', 'A type of loop', 'An error type'], 'correct': 1, 'explanation': 'A closure is a function that has access to variables from its outer (enclosing) scope.'},
+                            {'text': 'Which keyword declares a block-scoped variable?', 'type': 'multiple_choice', 'options': ['var', 'let', 'const', 'Both let and const'], 'correct': 3, 'explanation': 'Both let and const are block-scoped. var is function-scoped.', 'points': 10},
+                            {'text': 'What does "===" check in JavaScript?', 'type': 'multiple_choice', 'options': ['Value only', 'Type only', 'Value and type', 'Reference'], 'correct': 2, 'explanation': '=== is the strict equality operator that checks both value and type.', 'points': 10},
+                            {'text': 'Arrow functions have their own "this" context.', 'type': 'true_false', 'options': ['True', 'False'], 'correct': 1, 'explanation': 'Arrow functions do NOT have their own this. They inherit it from the enclosing scope.', 'points': 10},
+                            {'text': 'What is the output of typeof null?', 'type': 'multiple_choice', 'options': ['"null"', '"undefined"', '"object"', '"boolean"'], 'correct': 2, 'explanation': 'typeof null returns "object" - this is a well-known JavaScript quirk.', 'points': 10},
+                            {'text': 'Which method converts JSON string to JavaScript object?', 'type': 'multiple_choice', 'options': ['JSON.stringify()', 'JSON.parse()', 'JSON.convert()', 'JSON.toObject()'], 'correct': 1, 'explanation': 'JSON.parse() converts a JSON string into a JavaScript object.', 'points': 10},
                         ]
                     }
                 },
                 {
-                    'title': 'Module 3: React Fundamentals',
-                    'description': 'Build modern UIs with React.',
-                    'xp_reward': 125,
+                    'title': 'React.js Framework',
+                    'description': 'Build modern UIs with React components and hooks',
+                    'order': 3,
+                    'xp_reward': 100,
                     'resources': [
-                        {'title': 'React in 100 Seconds', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=Tn6-PIqc4UM'},
-                        {'title': 'React Hooks Tutorial', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=TNhaISOUy6Q'},
-                        {'title': 'State Management with Context', 'type': 'article', 'url': 'https://react.dev/learn/passing-data-deeply-with-context'},
+                        {'title': 'React JS Full Course for Beginners', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=RVFAyFWO4go', 'description': 'Complete React course by Dave Gray'},
+                        {'title': 'React Hooks Tutorial', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=TNhaISOUy6Q', 'description': 'All React hooks explained by Fireship'},
+                        {'title': 'React Official Tutorial', 'type': 'article', 'url': 'https://react.dev/learn', 'description': 'Official React documentation and tutorial'},
                     ],
                     'quiz': {
-                        'title': 'React Quiz',
+                        'title': 'React Fundamentals Quiz',
+                        'description': 'Test your React knowledge',
                         'passing_score': 70,
+                        'xp_reward': 50,
                         'questions': [
-                            {'text': 'What hook is used to manage state in functional components?', 'options': ['useEffect', 'useState', 'useContext', 'useReducer'], 'correct': 1, 'explanation': 'useState is the primary hook for managing state.'},
-                            {'text': 'What does JSX stand for?', 'options': ['JavaScript XML', 'Java Syntax Extension', 'JSON XML', 'JavaScript Extension'], 'correct': 0, 'explanation': 'JSX stands for JavaScript XML.'},
-                            {'text': 'When does useEffect run by default?', 'options': ['Only on mount', 'Only on unmount', 'After every render', 'Never'], 'correct': 2, 'explanation': 'By default, useEffect runs after every render.'},
-                            {'text': 'What is the virtual DOM?', 'options': ['A browser feature', 'A lightweight copy of the real DOM', 'A CSS framework', 'A testing tool'], 'correct': 1, 'explanation': 'The virtual DOM is a lightweight JavaScript representation of the actual DOM.'},
-                            {'text': 'How do you pass data from parent to child?', 'options': ['State', 'Props', 'Context', 'Redux'], 'correct': 1, 'explanation': 'Props are used to pass data from parent to child components.'},
+                            {'text': 'What hook is used for side effects in React?', 'type': 'multiple_choice', 'options': ['useState', 'useEffect', 'useContext', 'useReducer'], 'correct': 1, 'explanation': 'useEffect is the hook for performing side effects like data fetching, subscriptions, etc.', 'points': 10},
+                            {'text': 'JSX stands for JavaScript XML.', 'type': 'true_false', 'options': ['True', 'False'], 'correct': 0, 'explanation': 'JSX stands for JavaScript XML. It allows writing HTML-like syntax in JavaScript.', 'points': 10},
+                            {'text': 'What is the virtual DOM?', 'type': 'multiple_choice', 'options': ['A copy of the real DOM in memory', 'A browser API', 'A CSS framework', 'A JavaScript engine'], 'correct': 0, 'explanation': 'The virtual DOM is a lightweight copy of the real DOM kept in memory for efficient updates.', 'points': 10},
                         ]
                     }
-                }
+                },
             ]
         },
         {
             'title': 'Python for Data Science',
-            'description': 'Learn Python programming and data analysis with pandas, NumPy, and visualization libraries.',
+            'description': 'Learn Python programming and essential data science libraries including NumPy, Pandas, and Matplotlib. Perfect for aspiring data analysts and scientists.',
             'category': 'Data Science',
-            'difficulty': 'beginner',
+            'difficulty': 'intermediate',
             'image_url': 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=800&h=400&fit=crop',
-            'xp_reward': 400,
+            'xp_reward': 600,
+            'creator_id': mike.id if mike else creator.id,
             'is_published': True,
             'is_approved': True,
-            'rating': 4.9,
-            'enrolled_count': 3200,
+            'rating': 4.8,
+            'total_ratings': 95,
+            'enrolled_count': 256,
             'modules': [
                 {
-                    'title': 'Module 1: Python Basics',
-                    'description': 'Get started with Python programming.',
-                    'xp_reward': 50,
+                    'title': 'Python Fundamentals',
+                    'description': 'Core Python programming concepts',
+                    'order': 1,
+                    'xp_reward': 75,
                     'resources': [
-                        {'title': 'Python for Beginners', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=kqtD5dpn9C8'},
-                        {'title': 'Python Documentation', 'type': 'article', 'url': 'https://docs.python.org/3/tutorial/'},
+                        {'title': 'Python Tutorial - Full Course for Beginners', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=_uQrJ0TkZlc', 'description': 'Complete Python tutorial by Programming with Mosh'},
+                        {'title': 'Python Official Tutorial', 'type': 'article', 'url': 'https://docs.python.org/3/tutorial/', 'description': 'Official Python documentation tutorial'},
+                        {'title': 'Python Functions and Modules', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=9Os0o3wzS_I', 'description': 'Functions, modules, and packages in Python'},
                     ],
                     'quiz': {
                         'title': 'Python Basics Quiz',
+                        'description': 'Test your Python fundamentals',
                         'passing_score': 70,
+                        'xp_reward': 50,
                         'questions': [
-                            {'text': 'What is the correct way to create a list in Python?', 'options': ['list = (1, 2, 3)', 'list = [1, 2, 3]', 'list = {1, 2, 3}', 'list = <1, 2, 3>'], 'correct': 1, 'explanation': 'Lists are created using square brackets [].'},
-                            {'text': 'Which keyword is used to define a function?', 'options': ['function', 'def', 'func', 'define'], 'correct': 1, 'explanation': 'The def keyword is used to define functions in Python.'},
-                            {'text': 'How do you start a comment in Python?', 'options': ['//', '/*', '#', '--'], 'correct': 2, 'explanation': 'Python uses # for single-line comments.'},
-                            {'text': 'What is the output of print(2 ** 3)?', 'options': ['5', '6', '8', '9'], 'correct': 2, 'explanation': '** is the exponentiation operator. 2^3 = 8'},
-                            {'text': 'Which method adds an item to the end of a list?', 'options': ['add()', 'append()', 'insert()', 'push()'], 'correct': 1, 'explanation': 'append() adds an item to the end of a list.'},
+                            {'text': 'Which keyword is used to define a function in Python?', 'type': 'multiple_choice', 'options': ['function', 'func', 'def', 'define'], 'correct': 2, 'explanation': 'The "def" keyword is used to define functions in Python.', 'points': 10},
+                            {'text': 'Python is a statically typed language.', 'type': 'true_false', 'options': ['True', 'False'], 'correct': 1, 'explanation': 'Python is dynamically typed - variable types are determined at runtime.', 'points': 10},
+                            {'text': 'What does len() do in Python?', 'type': 'multiple_choice', 'options': ['Returns the type', 'Returns the length', 'Returns the last element', 'Returns a range'], 'correct': 1, 'explanation': 'len() returns the number of items in an object (string length, list size, etc).', 'points': 10},
                         ]
                     }
                 },
                 {
-                    'title': 'Module 2: Data Analysis with Pandas',
-                    'description': 'Master data manipulation with pandas.',
-                    'xp_reward': 75,
+                    'title': 'Data Analysis with Pandas',
+                    'description': 'Master data manipulation and analysis',
+                    'order': 2,
+                    'xp_reward': 100,
                     'resources': [
-                        {'title': 'Pandas Tutorial', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=vmEHCJofslg'},
-                        {'title': 'Pandas Documentation', 'type': 'article', 'url': 'https://pandas.pydata.org/docs/getting_started/'},
+                        {'title': 'Pandas Tutorial for Beginners', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=vmEHCJofslg', 'description': 'Complete Pandas tutorial by Kevin Markham'},
+                        {'title': 'NumPy Tutorial for Beginners', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=QUT1VHiLmmI', 'description': 'NumPy fundamentals for data science'},
+                        {'title': 'Pandas Documentation', 'type': 'article', 'url': 'https://pandas.pydata.org/docs/getting_started/intro_tutorials/', 'description': 'Official Pandas getting started tutorials'},
                     ],
                     'quiz': {
-                        'title': 'Pandas Quiz',
+                        'title': 'Data Analysis Quiz',
+                        'description': 'Test your Pandas and data analysis skills',
                         'passing_score': 70,
+                        'xp_reward': 50,
                         'questions': [
-                            {'text': 'What is a DataFrame?', 'options': ['A 1D array', 'A 2D labeled data structure', 'A dictionary', 'A function'], 'correct': 1, 'explanation': 'A DataFrame is a 2-dimensional labeled data structure.'},
-                            {'text': 'How do you read a CSV file?', 'options': ['pd.read_csv()', 'pd.load_csv()', 'pd.open_csv()', 'pd.import_csv()'], 'correct': 0, 'explanation': 'pd.read_csv() is used to read CSV files into a DataFrame.'},
-                            {'text': 'How do you select a column named "age"?', 'options': ['df.age or df["age"]', 'df.get("age")', 'df.column("age")', 'df.select("age")'], 'correct': 0, 'explanation': 'You can use dot notation or bracket notation to select columns.'},
+                            {'text': 'What is the primary data structure in Pandas?', 'type': 'multiple_choice', 'options': ['Array', 'DataFrame', 'Dictionary', 'Matrix'], 'correct': 1, 'explanation': 'DataFrame is the primary data structure in Pandas for tabular data.', 'points': 10},
+                            {'text': 'Which method reads a CSV file into a DataFrame?', 'type': 'multiple_choice', 'options': ['pd.load_csv()', 'pd.read_csv()', 'pd.import_csv()', 'pd.open_csv()'], 'correct': 1, 'explanation': 'pd.read_csv() is the standard method to read CSV files into DataFrames.', 'points': 10},
                         ]
                     }
-                }
+                },
             ]
         },
         {
-            'title': 'UX Design Fundamentals',
-            'description': 'Learn user experience design principles, research methods, and prototyping techniques.',
-            'category': 'Design',
-            'difficulty': 'beginner',
-            'image_url': 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=400&fit=crop',
-            'xp_reward': 350,
-            'is_published': True,
-            'is_approved': True,
-            'rating': 4.7,
-            'enrolled_count': 1850,
-            'modules': [
-                {
-                    'title': 'Module 1: Introduction to UX',
-                    'description': 'Understand the fundamentals of user experience design.',
-                    'xp_reward': 50,
-                    'resources': [
-                        {'title': 'What is UX Design?', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=SRec90j6lTY'},
-                        {'title': 'UX Design Principles', 'type': 'article', 'url': 'https://www.interaction-design.org/literature/topics/ux-design'},
-                    ],
-                    'quiz': {
-                        'title': 'UX Fundamentals Quiz',
-                        'passing_score': 70,
-                        'questions': [
-                            {'text': 'What does UX stand for?', 'options': ['User Experience', 'User Extension', 'Universal Experience', 'Unified Experience'], 'correct': 0, 'explanation': 'UX stands for User Experience.'},
-                            {'text': 'Which is NOT a UX research method?', 'options': ['User interviews', 'A/B testing', 'Database optimization', 'Usability testing'], 'correct': 2, 'explanation': 'Database optimization is a backend development task, not a UX research method.'},
-                            {'text': 'What is a persona?', 'options': ['A user type', 'A fictional character representing users', 'A design tool', 'A testing method'], 'correct': 1, 'explanation': 'A persona is a fictional character created to represent a user type.'},
-                        ]
-                    }
-                }
-            ]
-        },
-        {
-            'title': 'DevOps Essentials',
-            'description': 'Master CI/CD pipelines, containerization with Docker, and cloud deployment.',
+            'title': 'DevOps & Cloud Computing',
+            'description': 'Learn Docker, Kubernetes, CI/CD pipelines, and cloud deployment. Essential skills for modern software engineering teams.',
             'category': 'DevOps',
             'difficulty': 'advanced',
             'image_url': 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=800&h=400&fit=crop',
-            'xp_reward': 600,
+            'xp_reward': 700,
+            'creator_id': creator.id,
+            'is_published': True,
+            'is_approved': True,
+            'rating': 4.5,
+            'total_ratings': 67,
+            'enrolled_count': 178,
+            'modules': [
+                {
+                    'title': 'Docker Fundamentals',
+                    'description': 'Containerize applications with Docker',
+                    'order': 1,
+                    'xp_reward': 100,
+                    'resources': [
+                        {'title': 'Docker Tutorial for Beginners', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=fqMOX6JJhGo', 'description': 'Full Docker course by TechWorld with Nana'},
+                        {'title': 'Docker in 100 Seconds', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=Gjnup-PuquQ', 'description': 'Quick Docker overview by Fireship'},
+                        {'title': 'Docker Official Getting Started', 'type': 'article', 'url': 'https://docs.docker.com/get-started/', 'description': 'Official Docker getting started guide'},
+                    ],
+                    'quiz': {
+                        'title': 'Docker Basics Quiz',
+                        'description': 'Test your Docker knowledge',
+                        'passing_score': 70,
+                        'xp_reward': 50,
+                        'questions': [
+                            {'text': 'What file defines a Docker image?', 'type': 'multiple_choice', 'options': ['docker-compose.yml', 'Dockerfile', 'package.json', '.dockerignore'], 'correct': 1, 'explanation': 'A Dockerfile contains instructions to build a Docker image.', 'points': 10},
+                            {'text': 'Docker containers share the host OS kernel.', 'type': 'true_false', 'options': ['True', 'False'], 'correct': 0, 'explanation': 'Unlike VMs, Docker containers share the host OS kernel, making them lightweight.', 'points': 10},
+                        ]
+                    }
+                },
+                {
+                    'title': 'CI/CD Pipelines',
+                    'description': 'Automate testing and deployment',
+                    'order': 2,
+                    'xp_reward': 100,
+                    'resources': [
+                        {'title': 'GitHub Actions Tutorial', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=R8_veQiYBjI', 'description': 'Complete GitHub Actions CI/CD tutorial by TechWorld with Nana'},
+                        {'title': 'CI/CD Explained', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=scEDHsr3APg', 'description': 'CI/CD concepts explained by Fireship'},
+                    ],
+                    'quiz': None
+                },
+            ]
+        },
+        {
+            'title': 'Mobile App Development with React Native',
+            'description': 'Build cross-platform mobile apps using React Native and Expo. Create iOS and Android apps with a single codebase.',
+            'category': 'Mobile Development',
+            'difficulty': 'intermediate',
+            'image_url': 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=400&fit=crop',
+            'xp_reward': 550,
+            'creator_id': mike.id if mike else creator.id,
             'is_published': True,
             'is_approved': True,
             'rating': 4.6,
-            'enrolled_count': 980,
+            'total_ratings': 54,
+            'enrolled_count': 145,
             'modules': [
                 {
-                    'title': 'Module 1: Docker Fundamentals',
-                    'description': 'Learn containerization with Docker.',
-                    'xp_reward': 100,
+                    'title': 'React Native Basics',
+                    'description': 'Get started with React Native and Expo',
+                    'order': 1,
+                    'xp_reward': 80,
                     'resources': [
-                        {'title': 'Docker in 100 Seconds', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=Gjnup-PuquQ'},
-                        {'title': 'Docker Getting Started', 'type': 'article', 'url': 'https://docs.docker.com/get-started/'},
+                        {'title': 'React Native Tutorial for Beginners', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=0-S5a0eXPoc', 'description': 'Full React Native course by Programming with Mosh'},
+                        {'title': 'React Native in 100 Seconds', 'type': 'video', 'url': 'https://www.youtube.com/watch?v=gvkqT_Uoahw', 'description': 'Quick overview by Fireship'},
+                        {'title': 'Expo Documentation', 'type': 'article', 'url': 'https://docs.expo.dev/', 'description': 'Official Expo documentation for React Native'},
                     ],
                     'quiz': {
-                        'title': 'Docker Quiz',
+                        'title': 'React Native Basics Quiz',
+                        'description': 'Test your React Native knowledge',
                         'passing_score': 70,
+                        'xp_reward': 50,
                         'questions': [
-                            {'text': 'What is a Docker container?', 'options': ['A virtual machine', 'A lightweight isolated environment', 'A programming language', 'A database'], 'correct': 1, 'explanation': 'A container is a lightweight, isolated environment for running applications.'},
-                            {'text': 'What file defines a Docker image?', 'options': ['docker.yml', 'Dockerfile', 'container.json', 'image.xml'], 'correct': 1, 'explanation': 'A Dockerfile contains instructions to build a Docker image.'},
-                            {'text': 'What command runs a container?', 'options': ['docker start', 'docker run', 'docker execute', 'docker launch'], 'correct': 1, 'explanation': 'docker run creates and starts a container from an image.'},
+                            {'text': 'React Native uses native components instead of web views.', 'type': 'true_false', 'options': ['True', 'False'], 'correct': 0, 'explanation': 'React Native renders using actual native components, not WebViews.', 'points': 10},
+                            {'text': 'Which component is the React Native equivalent of <div>?', 'type': 'multiple_choice', 'options': ['<Container>', '<View>', '<Box>', '<Section>'], 'correct': 1, 'explanation': '<View> is the fundamental building block in React Native, similar to <div> in HTML.', 'points': 10},
                         ]
                     }
-                }
+                },
             ]
-        }
+        },
     ]
-    
-    for path_data in learning_paths_data:
-        existing = LearningPath.query.filter_by(title=path_data['title']).first()
-        if existing:
+
+    for path_data in paths_data:
+        if LearningPath.query.filter_by(title=path_data['title']).first():
             continue
         
-        modules_data = path_data.pop('modules', [])
-        
-        path = LearningPath(
-            creator_id=demo_user.id,
-            **path_data
-        )
+        modules_data = path_data.pop('modules')
+        path = LearningPath(**path_data)
         db.session.add(path)
         db.session.flush()
-        
-        for order, mod_data in enumerate(modules_data):
-            resources_data = mod_data.pop('resources', [])
+
+        for mod_data in modules_data:
+            resources_data = mod_data.pop('resources')
             quiz_data = mod_data.pop('quiz', None)
-            
-            module = Module(
-                learning_path_id=path.id,
-                order=order,
-                **mod_data
-            )
+            mod_data['learning_path_id'] = path.id
+            module = Module(**mod_data)
             db.session.add(module)
             db.session.flush()
-            
-            for res_order, res_data in enumerate(resources_data):
+
+            for i, res in enumerate(resources_data):
                 resource = Resource(
-                    module_id=module.id,
-                    title=res_data['title'],
-                    resource_type=res_data['type'],
-                    url=res_data['url'],
-                    order=res_order
+                    title=res['title'],
+                    description=res.get('description', ''),
+                    resource_type=res['type'],
+                    url=res['url'],
+                    order=i + 1,
+                    module_id=module.id
                 )
                 db.session.add(resource)
-            
+
             if quiz_data:
-                questions_data = quiz_data.pop('questions', [])
+                questions_data = quiz_data.pop('questions')
                 quiz = Quiz(
-                    module_id=module.id,
                     title=quiz_data['title'],
-                    passing_score=quiz_data.get('passing_score', 70),
-                    xp_reward=50
+                    description=quiz_data['description'],
+                    module_id=module.id,
+                    passing_score=quiz_data['passing_score'],
+                    xp_reward=quiz_data['xp_reward']
                 )
                 db.session.add(quiz)
                 db.session.flush()
-                
-                for q_order, q_data in enumerate(questions_data):
+
+                for j, q in enumerate(questions_data):
                     question = Question(
                         quiz_id=quiz.id,
-                        question_text=q_data['text'],
-                        question_type='multiple_choice',
-                        correct_answer=q_data['correct'],
-                        explanation=q_data.get('explanation', ''),
-                        order=q_order,
-                        points=10
+                        question_text=q['text'],
+                        question_type=q['type'],
+                        correct_answer=q['correct'],
+                        explanation=q['explanation'],
+                        order=j + 1,
+                        points=q['points']
                     )
-                    question.set_options(q_data['options'])
+                    question.set_options(q['options'])
                     db.session.add(question)
-    
+
     db.session.commit()
-    print(f"Created {len(learning_paths_data)} learning paths with modules, resources, and quizzes")
+    print(f"Created {len(paths_data)} learning paths with modules, resources, and quizzes")
 
 
-def seed_demo_users():
-    """Create demo users for testing."""
-    users = [
-        {
-            'username': 'alex_learner',
-            'email': 'alex@example.com',
-            'role': 'learner',
-            'xp': 12450,
-            'points': 6225,
-            'streak_days': 12,
-            'hours_learned': 48.5,
-            'avatar_url': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop',
-            'bio': 'Passionate about learning web development!'
-        },
-        {
-            'username': 'jessica_wong',
-            'email': 'jessica@example.com',
-            'role': 'contributor',
-            'xp': 24500,
-            'points': 12250,
-            'streak_days': 45,
-            'hours_learned': 156.0,
-            'avatar_url': 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop',
-            'bio': 'Full-stack developer and course creator.'
-        },
-        {
-            'username': 'david_kim',
-            'email': 'david@example.com',
-            'role': 'learner',
-            'xp': 22150,
-            'points': 11075,
-            'streak_days': 30,
-            'hours_learned': 120.0,
-            'avatar_url': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop',
-            'bio': 'Data scientist in training.'
-        },
-        {
-            'username': 'sarah_jenkins',
-            'email': 'sarah@example.com',
-            'role': 'learner',
-            'xp': 21800,
-            'points': 10900,
-            'streak_days': 28,
-            'hours_learned': 98.0,
-            'avatar_url': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop',
-            'bio': 'UX designer learning to code.'
-        },
-        {
-            'username': 'admin_user',
-            'email': 'admin@learnquest.com',
-            'role': 'admin',
-            'xp': 50000,
-            'points': 25000,
-            'streak_days': 100,
-            'hours_learned': 500.0,
-            'avatar_url': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop',
-            'bio': 'Platform administrator.'
-        }
-    ]
-    
-    for user_data in users:
-        existing = User.query.filter_by(username=user_data['username']).first()
-        if not existing:
-            user = User(**user_data)
-            user.set_password('demo123')
-            db.session.add(user)
-    
-    db.session.commit()
-    print(f"Created {len(users)} demo users")
-
-
-def run_seed():
-    """Run all seed functions."""
+def seed_all():
     print("Seeding database...")
     seed_badges()
     seed_achievements()
     seed_challenges()
-    seed_demo_users()
+    seed_users()
     seed_learning_paths()
     print("Database seeding complete!")
 
@@ -587,5 +394,4 @@ def run_seed():
 if __name__ == '__main__':
     app = create_app()
     with app.app_context():
-        db.create_all()
-        run_seed()
+        seed_all()

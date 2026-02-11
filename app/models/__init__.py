@@ -5,3 +5,4 @@ from app.models.comment import Comment
 from app.models.quiz import Quiz, Question, QuizAttempt
 from app.models.progress import UserProgress, ResourceCompletion
 
+from app.models.report import Report, Notification
