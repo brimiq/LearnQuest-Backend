@@ -120,6 +120,47 @@ def add_resource(module_id):
     }), 201
 
 
+@learning_paths_bp.route('/search', methods=['GET'])
+def search_learning_content():
+    q = request.args.get('q', '').strip().lower()
+    if len(q) < 2:
+        return jsonify({'paths': [], 'modules': [], 'resources': []}), 200
+
+    matched_paths = LearningPath.query.filter(
+        LearningPath.is_published == True,
+        db.or_(
+            LearningPath.title.ilike(f'%{q}%'),
+            LearningPath.description.ilike(f'%{q}%'),
+            LearningPath.category.ilike(f'%{q}%')
+        )
+    ).limit(6).all()
+
+    matched_modules = db.session.query(Module).join(LearningPath).filter(
+        LearningPath.is_published == True,
+        db.or_(
+            Module.title.ilike(f'%{q}%'),
+            Module.description.ilike(f'%{q}%')
+        )
+    ).limit(6).all()
+
+    matched_resources = db.session.query(Resource).join(Module).join(LearningPath).filter(
+        LearningPath.is_published == True,
+        db.or_(
+            Resource.title.ilike(f'%{q}%'),
+            Resource.description.ilike(f'%{q}%')
+        )
+    ).limit(6).all()
+
+    return jsonify({
+        'paths': [{'id': p.id, 'title': p.title, 'category': p.category, 'difficulty': p.difficulty} for p in matched_paths],
+        'modules': [{'id': m.id, 'title': m.title, 'learning_path_id': m.learning_path_id,
+                      'path_title': LearningPath.query.get(m.learning_path_id).title if LearningPath.query.get(m.learning_path_id) else ''} for m in matched_modules],
+        'resources': [{'id': r.id, 'title': r.title, 'module_id': r.module_id,
+                        'path_id': Module.query.get(r.module_id).learning_path_id if Module.query.get(r.module_id) else 0,
+                        'path_title': LearningPath.query.get(Module.query.get(r.module_id).learning_path_id).title if Module.query.get(r.module_id) and LearningPath.query.get(Module.query.get(r.module_id).learning_path_id) else ''} for r in matched_resources],
+    }), 200
+
+
 @learning_paths_bp.route('/<int:path_id>/rate', methods=['POST'])
 @jwt_required()
 def rate_path(path_id):
