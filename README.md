@@ -4,7 +4,7 @@ A Flask-based REST API for the LearnQuest Crowdsourced Learning Platform with Ga
 
 ## Team Members — Group 7
 - **Ibrahim Abdu** — Project Leader, Backend Architecture & Integration
-- **Bradley Murimi** — Backend Developer (Auth & Gamification)
+- **Bradley Murimi** — Backend Developer Lead (Auth & Gamification)
 - **Joyce Njogu** — Frontend Developer Lead
 - **Julius Mutinda** — Frontend Developer (Auth & Learning)
 - **Ephrahim Otieno** — Full Stack Developer (Community Features)
