@@ -43,6 +43,7 @@ class LearningPath(db.Model):
             'xp_reward': self.xp_reward,
             'creator_id': self.creator_id,
             'is_published': self.is_published,
+            'is_approved': self.is_approved,
             'rating': self.rating,
             'enrolled_count': self.enrolled_count,
             'created_at': self.created_at.isoformat() if self.created_at else None

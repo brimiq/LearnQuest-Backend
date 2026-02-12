@@ -11,6 +11,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), default='learner')  # admin, contributor, learner
+    status = db.Column(db.String(20), default='active')  # active, suspended, banned
     
     # Gamification fields
     xp = db.Column(db.Integer, default=0)
@@ -43,6 +44,7 @@ class User(db.Model):
             'username': self.username,
             'email': self.email,
             'role': self.role,
+            'status': self.status,
             'xp': self.xp,
             'points': self.points,
             'streak_days': self.streak_days,

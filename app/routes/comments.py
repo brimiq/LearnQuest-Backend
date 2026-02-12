@@ -48,7 +48,7 @@ def get_comments():
 @comments_bp.route('', methods=['POST'])
 @jwt_required()
 def create_comment():
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     data = request.get_json()
 
     content = data.get('content')
@@ -108,7 +108,7 @@ def create_comment():
 @comments_bp.route('/<int:comment_id>', methods=['PUT'])
 @jwt_required()
 def update_comment(comment_id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     comment = Comment.query.get_or_404(comment_id)
 
     if comment.user_id != current_user_id:
@@ -135,7 +135,7 @@ def update_comment(comment_id):
 @comments_bp.route('/<int:comment_id>', methods=['DELETE'])
 @jwt_required()
 def delete_comment(comment_id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     comment = Comment.query.get_or_404(comment_id)
 
     if comment.user_id != current_user_id:

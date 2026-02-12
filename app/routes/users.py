@@ -23,7 +23,7 @@ def get_user(user_id):
 @users_bp.route('/profile', methods=['PUT'])
 @jwt_required()
 def update_profile():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     
     if not user:
